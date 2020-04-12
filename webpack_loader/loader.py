@@ -38,12 +38,16 @@ class WebpackLoader(object):
         return self.load_assets()
 
     def filter_chunks(self, chunks):
-        for chunk in chunks:
-            ignore = any(regex.match(chunk['name'])
+        for chunk_name in chunks:
+            chunk = self.get_chunk_from_name(chunk_name)
+            ignore = any(regex.match(chunk)
                          for regex in self.config['ignores'])
             if not ignore:
                 chunk['url'] = self.get_chunk_url(chunk)
                 yield chunk
+
+    def get_chunk_from_name(self, chunk_name):
+        return self.get_assets().get(chunk_name)
 
     def get_chunk_url(self, chunk):
         public_path = chunk.get('publicPath')
