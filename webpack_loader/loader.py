@@ -181,7 +181,7 @@ class WebpackLoader(object):
                         yield chunk
 
                 # Finished iteration
-                raise StopIteration
+                return
             except KeyError:
                 raise WebpackBundleLookupError(f'Cannot resolve bundle {bundle_name}.')
         elif assets['status'] == 'error':
