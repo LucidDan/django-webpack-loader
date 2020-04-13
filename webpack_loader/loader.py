@@ -108,6 +108,9 @@ class WebpackLoader(object):
 
         if compiled:
             if assets['status'] != 'done':
+                # Raise error if status == error
+                self.raise_error_from_stats()
+                # If status != error, raise a generic error
                 raise WebpackLoaderBadStatsError(
                     f'Tried to access webpack stats "{self.name}", but it has status "{assets["status"]}"'
                 )
@@ -135,6 +138,17 @@ class WebpackLoader(object):
             return public_path
 
         return staticfiles_storage.url(f'{self.config["BUNDLE_DIR_NAME"]}{chunk["name"]}')
+
+    def raise_error_from_stats(self):
+        # Currently only returns the first error...
+        assets = self.get_assets()
+
+        if assets['status'] == 'error':
+            error = assets.get('error', 'Unknown Error')
+            message = assets.get('message', '')
+
+            logger.error("Error found in webpack: '%s' - %s", error, message)
+            raise WebpackError(f"Error in webpack '{error}': {message}")
 
     def get_bundle(self, bundle_name: str) -> Iterator["WebpackBundleAsset"]:
         """Get bundle based on bundle_name"""
@@ -184,14 +198,9 @@ class WebpackLoader(object):
                 return
             except KeyError:
                 raise WebpackBundleLookupError(f'Cannot resolve bundle {bundle_name}.')
-        elif assets['status'] == 'error':
-            # Currently only returns the first error...
 
-            error = assets.get('error', 'Unknown Error')
-            message = assets.get('message', '')
-
-            logger.error("Error found in webpack: '%s' - %s", error, message)
-            raise WebpackError(f"Error in webpack '{error}': {message}")
+        # if assets['status'] == 'error', raise an exception
+        self.raise_error_from_stats()
 
         logger.error("Error found in webpack stats data: unknown status '%s'", assets['status'])
         raise WebpackLoaderBadStatsError(
