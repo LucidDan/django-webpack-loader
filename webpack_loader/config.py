@@ -50,7 +50,7 @@ def process_config(cfg: "WebpackConfig") -> "WebpackConfig":
         **DEFAULT_CONFIG,  # type: ignore
         **cfg,
         # add a cache of compiled regex
-        'ignores': [re.compile(pattern) for pattern in cfg['IGNORE']]
+        'ignores': [re.compile(pattern) for pattern in cfg.get('IGNORE', DEFAULT_CONFIG['IGNORE'])]
     }
 
 
