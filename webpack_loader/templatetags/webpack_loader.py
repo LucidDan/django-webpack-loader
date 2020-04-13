@@ -1,26 +1,35 @@
+import logging
+from typing import Optional, List, TYPE_CHECKING
+
 from django import template, VERSION
-from django.conf import settings
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html_join, format_html
 
 from .. import utils
 
+if TYPE_CHECKING:
+    from ..loader import WebpackBundleAsset
+
+logger = logging.getLogger(__name__)
 register = template.Library()
 
 
 @register.simple_tag
-def render_bundle(bundle_name, extension=None, config='DEFAULT', attrs=''):
+def render_bundle(
+        bundle_name: str, extension: Optional[str] = None, config: str = 'DEFAULT', attrs: str = ''
+) -> str:
     tags = utils.get_as_tags(bundle_name, extension=extension, config=config, attrs=attrs)
-    return mark_safe('\n'.join(tags))
+    return format_html_join("\n", "{}", ((tag,) for tag in tags))
 
 
 @register.simple_tag
-def webpack_static(asset_name, config='DEFAULT'):
-    return utils.get_static(asset_name, config=config)
+def webpack_static(asset_name: str, config: str = 'DEFAULT') -> str:
+    return format_html("{}", utils.get_static(asset_name, config=config))
 
 
-assignment_tag = register.simple_tag if VERSION >= (1, 9) else register.assignment_tag
-@assignment_tag
-def get_files(bundle_name, extension=None, config='DEFAULT'):
+@register.simple_tag
+def get_files(
+        bundle_name: str, extension: Optional[str] = None, config: str = 'DEFAULT'
+) -> List["WebpackBundleAsset"]:
     """
     Returns all chunks in the given bundle.
     Example usage::
@@ -33,4 +42,5 @@ def get_files(bundle_name, extension=None, config='DEFAULT'):
     :param config: (optional) the name of the configuration
     :return: a list of matching chunks
     """
+
     return utils.get_files(bundle_name, extension=extension, config=config)

@@ -84,3 +84,4 @@ tests/webpack-stats-app2.json
 # PyCharm IDE
 .idea
 .vscode
+.mypy_cache
