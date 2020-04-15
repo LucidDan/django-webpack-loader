@@ -139,16 +139,20 @@ class WebpackLoader(object):
 
         return staticfiles_storage.url(f'{self.config["BUNDLE_DIR_NAME"]}{chunk["name"]}')
 
-    def raise_error_from_stats(self):
+    def raise_error_from_stats(self) -> None:
         # Currently only returns the first error...
         assets = self.get_assets()
 
-        if assets['status'] == 'error':
+        if assets['status'] in {'initialization', 'compile'}:
+            error = assets.get('error', 'Webpack has not finished compiling')
+            message = 'Webpack is either not running or still compiling the bundle'
+        elif assets['status'] == 'error':
             error = assets.get('error', 'Unknown Error')
             message = assets.get('message', '')
-
-            logger.error("Error found in webpack: '%s' - %s", error, message)
-            raise WebpackError(f"Error in webpack '{error}': {message}")
+        else:
+            return
+        logger.error("Error found in webpack: '%s' - %s", error, message)
+        raise WebpackError(f"Error in webpack '{error}': {message}")
 
     def get_bundle(self, bundle_name: str) -> Iterator["WebpackBundleAsset"]:
         """Get bundle based on bundle_name"""
