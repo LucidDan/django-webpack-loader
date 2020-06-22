@@ -64,7 +64,7 @@ class WebpackLoader(object):
     name: str
     config: "WebpackConfig"
     # Class property - used in classmethod only
-    _assets: Dict[str, "WebpackBundleContents"]
+    _assets: Dict[str, "WebpackBundleContents"] = None
 
     def __init__(self, name: str, config: "WebpackConfig") -> None:
         self.name = name
@@ -72,6 +72,8 @@ class WebpackLoader(object):
 
     @classmethod
     def global_cache(cls) -> Dict[str, "WebpackBundleContents"]:
+        if cls._assets is None:
+            cls._assets = {}
         return cls._assets
 
     def load_assets(self) -> "WebpackBundleContents":
@@ -144,7 +146,7 @@ class WebpackLoader(object):
         assets = self.get_assets()
 
         if assets['status'] in {'initialization', 'compile'}:
-            error = assets.get('error', 'Webpack has not finished compiling')
+            error = 'Webpack has not finished compiling'
             message = 'Webpack is either not running or still compiling the bundle'
         elif assets['status'] == 'error':
             error = assets.get('error', 'Unknown Error')
