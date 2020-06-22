@@ -108,18 +108,7 @@ class WebpackLoader(object):
             logger.debug("Cache disabled, loading stats from load_assets()...")
             assets = self.load_assets()
 
-        if compiled:
-            if assets['status'] != 'done':
-                # Raise error if status == error
-                self.raise_error_from_stats()
-                # If status != error, raise a generic error
-                raise WebpackLoaderBadStatsError(
-                    f'Tried to access webpack stats "{self.name}", but it has status "{assets["status"]}"'
-                )
-            else:
-                return assets
-        else:
-            return assets
+        return assets
 
     def get_chunk_from_name(self, chunk_name: str) -> "WebpackBundleAsset":
         """Retrieve the chunk asset for chunk_name, from the stats data"""
@@ -204,12 +193,12 @@ class WebpackLoader(object):
                 return
             except KeyError:
                 raise WebpackBundleLookupError(f'Cannot resolve bundle {bundle_name}.')
+        else:
+            # if assets['status'] == 'error', raise an exception
+            self.raise_error_from_stats()
 
-        # if assets['status'] == 'error', raise an exception
-        self.raise_error_from_stats()
-
-        logger.error("Error found in webpack stats data: unknown status '%s'", assets['status'])
-        raise WebpackLoaderBadStatsError(
-            "The stats file does not contain valid data. Make sure webpack-bundle-tracker "
-            "plugin is enabled and try to run webpack again."
-        )
+            logger.error("Error found in webpack stats data: unknown status '%s'", assets['status'])
+            raise WebpackLoaderBadStatsError(
+                "The stats file does not contain valid data. Make sure webpack-bundle-tracker "
+                "plugin is enabled and try to run webpack again."
+            )
